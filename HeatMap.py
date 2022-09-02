@@ -11,6 +11,7 @@ sns.set_style('whitegrid')
 
 
 def SimMidges(i, j, dps, eip):
+    np.random.seed(time.time())
     midgehostratio = 100  # Midge/host ratio
 
     hostpop = 100
