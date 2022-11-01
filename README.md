@@ -1,9 +1,9 @@
 # MidgePy
 
-<a href="https://github.com/stepien-lab/MidgePy/"><img src="https://img.shields.io/badge/GitHub-MidgePy-blue" /></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+<a href="https://github.com/stepien-lab/MidgePy/"><img src="https://img.shields.io/badge/GitHub-MidgePy-blue" /></a> <a href="https://doi.org/10.1101/2022.09.26.509502"><img src="https://img.shields.io/badge/bioRxiv-2022.09.26.509502-orange" /></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
 
 The code contained in the MidgePy project was developed to numerically simulate an agent-based model of biting midge dynamics to understand Bluetongue outbreaks. It is described in:
->[Shane Gladson](https://github.com/shanegladson) and [Tracy L. Stepien](https://github.com/tstepien/), An agent-based model of biting midge dynamics to understand Bluetongue outbreaks, In Preparation.
+>[Shane Gladson](https://github.com/shanegladson) and [Tracy L. Stepien](https://github.com/tstepien/), An agent-based model of biting midge dynamics to understand Bluetongue outbreaks, submitted to _Bulletin of Mathematical Biology_, bioRxiv: [2022.09.26.509502](https://doi.org/10.1101/2022.09.26.509502).
 
 ## Programs
 + [filename.m](filename.m): run this program to solve the model equations
