@@ -12,9 +12,6 @@ The Python libraries required to run the model include NumPy, SciPy, Matplotlib,
 + [HeatMap.py](HeatMap.py): run this script to generate the data for the heatmap used in the publication. This script runs multiple 60 day simulations at desired levels of $\alpha$ and $\rho$. This script will produce a large number of processes to simulate the model and will save the data to <i>csv</i> format. Change the desired number of processes if too many are created.
 + [TrackMidges.py](TrackMidges.py): Run this script to generate a sample of the flight paths of all midges over 2 days. This output was used to generate the sample midge flight path in the publication. This script will save the data to <i>csv</i> format.
 
-## Description of Folders
-+ [foldername](foldername): Code to create Figures... in the paper
-
 ## Lead Developer
 The lead developer of this code is [Shane Gladson](https://github.com/shanegladson).
 
