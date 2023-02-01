@@ -13,11 +13,12 @@ hostinf = np.full(hostpop, False)  # Entire host population is naive to BTV
 
 envir = Environment.Envir(length=1000)
 host = Swarm.HostSwarm(envir=envir, size=hostpop, infected=hostinf)
-swrm = Swarm.MidgeSwarm(envir=envir, size=midgepop, hostswarm=host, infected=midges, dps=1.0, savepositions=True)
+swrm = Swarm.MidgeSwarm(envir=envir, size=midgepop, hostswarm=host, infected=midges, savepositions=True,
+                        tempfile='temperature.csv')
 swrm.pVtoH = 0  # Don't want to consider transmission to host
-swrm.eip = 100  # Again just to be sure
 dt = 60  # Step the simulation every 60 seconds (1 minute)
-length = 2 * 300  # Total length in days of the simulation
+days = 60  # Total length in days of the simulation
+length = days * 300  # Total length in time steps of the simulation
 
 print("Moving swarm...")
 # RUN UNTIL ALL INFECTED MIDGES (FIRST GEN) HAVE DIED
@@ -30,5 +31,5 @@ for i in range(length):
 print("Simulation finished")
 
 print("Saving results...")
-swrm.writetocsv(trial=0, fname='Results/BiteRateAnalysis/AllInfected')
+swrm.SavePositions(fnamemidge='Results/Midge Paths/midgepositions.csv', fnamehost='Results/Midge Paths/hostpositions.csv')
 print("Results saved")

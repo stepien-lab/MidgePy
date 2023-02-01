@@ -4,6 +4,7 @@ import Swarm
 import Environment
 from SALib.sample import saltelli
 import multiprocessing
+from multiprocessing.pool import Pool
 
 sns.set_style('whitegrid')
 
@@ -23,7 +24,7 @@ def SimMidges(iim, dps, eip):
     host = Swarm.HostSwarm(envir=envir, size=hostpop, infected=hostinf)
     swrm = Swarm.MidgeSwarm(envir=envir, size=midgepop, hostswarm=host, infected=midges, dps=dps, eip=eip)
     dt = 60  # Step the simulation every 60 seconds (1 minute)
-    steps = 300 * 60  # Total number of steps for the simulation
+    steps = 300 * 1  # Total number of steps for the simulation
 
     print("Moving swarm...")
     for i in range(steps):
@@ -55,20 +56,21 @@ params = saltelli.sample(problem, 16)
 
 def SaveAnalysis(iim, i):
     results = np.empty(shape=(params.shape[0], params.shape[1] + 1))
+    inputs = []
     for j, X in enumerate(params):
         dps, eip = X
-        # results[j] = SimMidges(i, dps, eip)
-        results[j] = [dps, eip, SimMidges(iim, dps, eip)]
-        print(j, results[j])
-
+        inputs.append((iim, dps, eip))
+    with Pool() as pool:
+        for result in pool.imap(SimMidges, inputs):
+            results.append(result)
     np.savetxt(fname='Results/IIM' + str(iim) + '/Trial' + str(i) + '.csv', X=results, delimiter=',', newline='\n')
 
 
 threadlist = []
 
 if __name__ == '__main__':
-    for iim in range(1, 6):
-        for i in range(15):
+    for iim in range(1, 2):
+        for i in range(1):
             p = multiprocessing.Process(target=SaveAnalysis, args=(iim, i))
             p.start()
             threadlist.append(p)
