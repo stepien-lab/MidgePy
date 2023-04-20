@@ -10,9 +10,9 @@ import csv
 sns.set_style('whitegrid')
 
 
-def SimMidges(i, j, dps, eip):
-    np.random.seed() # Added random seed to each process to prevent result duplication
-    midgehostratio = 100  # Midge/host ratio
+def SimMidges(i, j, dps, eip, mhr):
+    np.random.seed() # Add a random seed for the process to prevent duplication
+    midgehostratio = mhr  # Midge/host ratio
 
     hostpop = 100
     midgepop = hostpop * midgehostratio
@@ -39,7 +39,7 @@ def SimMidges(i, j, dps, eip):
 
     print("Simulation finished")
 
-    with open('/blue/rcstudents/shanegladson/HeatMap/Trial' + str(i) + '.csv', 'a') as f:
+    with open('/blue/rcstudents/shanegladson/HeatMap/MHR' + str(midgehostratio) + 'Trial' + str(i) + '.csv', 'a') as f:
         writer = csv.writer(f, delimiter=',')
         print('Thread', i, 'Trial', j, 'in progress')
         writer.writerow([dps, eip, swrm.hostswarm.totalinfectedhost[-1]])
@@ -56,9 +56,10 @@ print(params)
 
 def CalculateHeatMap(i):
     subprocesslist = []
+
     for j in range(len(params)):
         dps, eip = params[j]
-        subprocesslist.append(multiprocessing.Process(target=SimMidges, args=(i, j, dps, eip)))
+        subprocesslist.append(multiprocessing.Process(target=SimMidges, args=(i, j, dps, eip, 5)))
 
     for t in subprocesslist:
         t.start()
@@ -66,6 +67,29 @@ def CalculateHeatMap(i):
     for t in subprocesslist:
         t.join()
 
+    subprocesslist = []
+
+    for j in range(len(params)):
+        dps, eip = params[j]
+        subprocesslist.append(multiprocessing.Process(target=SimMidges, args=(i, j, dps, eip, 10)))
+
+    for t in subprocesslist:
+        t.start()
+
+    for t in subprocesslist:
+        t.join()
+
+    subprocesslist = []
+
+    for j in range(len(params)):
+        dps, eip = params[j]
+        subprocesslist.append(multiprocessing.Process(target=SimMidges, args=(i, j, dps, eip, 50)))
+
+    for t in subprocesslist:
+        t.start()
+
+    for t in subprocesslist:
+        t.join()
 
 
 

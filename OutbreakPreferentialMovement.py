@@ -1,5 +1,5 @@
 import numpy as np
-import Swarm
+import SwarmPreferentialMovement as Swarm
 import Environment
 import threading
 import multiprocessing
@@ -19,7 +19,7 @@ def Outbreak(dps, eip, iim, pVtoH):
 
     envir = Environment.Envir(length=1000)
     host = Swarm.HostSwarm(envir=envir, size=hostpop, infected=hostinfected)
-    swrm = Swarm.MidgeSwarm(envir=envir, size=midgepop, hostswarm=host, infected=midges, dps=dps, eip=eip, pVtoH=pVtoH)
+    swrm = Swarm.MidgeSwarmPreferentialMovement(envir=envir, size=midgepop, hostswarm=host, mapimage='FarmMap.png', infected=midges, dps=dps, eip=eip, pVtoH=pVtoH)
     dt = 60  # Step the simulation every 60 seconds (1 minute)
 
     while True:
@@ -57,7 +57,7 @@ def ThreadSet(iim):
             numoutbreaks[i, 1] = np.sum(success)
 
         print(numoutbreaks)
-        np.savetxt('/blue/rcstudents/shanegladson/IIM' + str(iim) + '/OutbreakProbabilityLongerpVtoH' + str(pVtoH) +
+        np.savetxt('/blue/rcstudents/shanegladson/IIM' + str(iim) + '/OutbreakProbabilityLongerPreferentialMovementpVtoH' + str(pVtoH) +
                    '.csv', X=numoutbreaks, delimiter=',', newline='\n')
 
 

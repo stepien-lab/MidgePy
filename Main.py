@@ -5,11 +5,15 @@ import Environment
 from SALib.sample import saltelli
 import multiprocessing
 from multiprocessing.pool import Pool
+import numpy as np
+import time
+import os
 
 sns.set_style('whitegrid')
 
 
-def SimMidges(iim, dps, eip):
+def SimMidges(iim, dps, eip, pVtoH, pHtoV, incubationtime):
+    np.random.seed()  # Add a random seed to prevent result duplication
     midgehostratio = 100  # Midge/host ratio
 
     hostpop = 100
@@ -21,10 +25,11 @@ def SimMidges(iim, dps, eip):
     hostinf = np.full(hostpop, False)  # Entire host population is naive to BTV
 
     envir = Environment.Envir(length=1000)
-    host = Swarm.HostSwarm(envir=envir, size=hostpop, infected=hostinf)
-    swrm = Swarm.MidgeSwarm(envir=envir, size=midgepop, hostswarm=host, infected=midges, dps=dps, eip=eip)
+    host = Swarm.HostSwarm(envir=envir, size=hostpop, infected=hostinf, incubationtime=incubationtime)
+    swrm = Swarm.MidgeSwarm(envir=envir, size=midgepop, hostswarm=host, infected=midges, dps=dps, eip=eip,
+                            pVtoH=pVtoH, pHtoV=pHtoV)
     dt = 60  # Step the simulation every 60 seconds (1 minute)
-    steps = 300 * 1  # Total number of steps for the simulation
+    steps = 300 * 60  # Total number of steps for the simulation
 
     print("Moving swarm...")
     for i in range(steps):
@@ -43,37 +48,44 @@ def SimMidges(iim, dps, eip):
 
 
 problem = {
-    'num_vars': 2,
-    'names': ['dps', 'eip'],
+    'num_vars': 5,
+    'names': ['dps', 'eip', 'pVtoH', 'pHtoV', 'incubationtime'],
     'bounds': [
-        [0.6, 0.9],
-        [10, 20]
+        [0.0, 1.0],
+        [0, 20],
+        [0.0, 1.0],
+        [0.0, 1.0],
+        [1.0, 10.0]
     ]
 }
 
 params = saltelli.sample(problem, 16)
+print(params.shape)
 
 
 def SaveAnalysis(iim, i):
-    results = np.empty(shape=(params.shape[0], params.shape[1] + 1))
+    results = []
     inputs = []
     for j, X in enumerate(params):
-        dps, eip = X
-        inputs.append((iim, dps, eip))
+        dps, eip, pVtoH, pHtoV, incubationtime = X
+        inputs.append((iim, dps, eip, pVtoH, pHtoV, incubationtime))
     with Pool() as pool:
-        for result in pool.imap(SimMidges, inputs):
+        print('CPU count:', os.cpu_count())
+        for result in pool.starmap(SimMidges, inputs):
             results.append(result)
-    np.savetxt(fname='Results/IIM' + str(iim) + '/Trial' + str(i) + '.csv', X=results, delimiter=',', newline='\n')
+
+    np.savetxt(fname='/blue/rcstudents/shanegladson/IIM' + str(iim) + '/Trial' + str(i) + '.csv', X=results, delimiter=',', newline='\n')
 
 
 threadlist = []
 
 if __name__ == '__main__':
-    for iim in range(1, 2):
-        for i in range(1):
-            p = multiprocessing.Process(target=SaveAnalysis, args=(iim, i))
-            p.start()
-            threadlist.append(p)
+    for iim in range(1, 6):
+        for i in range(15):
+            # p = multiprocessing.Process(target=SaveAnalysis, args=(iim, i))
+            # p.start()
+            # threadlist.append(p)
+            SaveAnalysis(iim, i)
 
-        for p in threadlist:
-            p.join()
+        # for p in threadlist:
+        #     p.join()

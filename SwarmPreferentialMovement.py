@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 from numba import jit, njit
+from PIL import Image
 
 """ This is the main swarm class, where all midges are simulated. This class holds all attributes of the midges and will
 be responsible for moving the host during its move function as well. Moving the time is done by calling the move() method
@@ -8,10 +9,21 @@ so be sure not to move the host on their own! This feature will be added later.
 """
 
 
-class MidgeSwarm:
+class MidgeSwarmPreferentialMovement:
 
-    def __init__(self, envir, hostswarm, size=100, infected='random', midgedeath=True, dps=0.75, eip=21, pVtoH = 0.9, pHtoV = 0.14, savepositions=False, movehosts=False):
-
+    def __init__(self, envir, hostswarm, mapimage, size=100, infected='random', midgedeath=True, dps=0.75, eip=21, pVtoH = 0.9, pHtoV = 0.14, savepositions=False, movehosts=False):
+        # Import the map file to be stored (200x200), where one pixel is 5 meters
+        self.img = Image.open(mapimage).convert('L')
+        self.map = np.asarray(self.img, dtype=np.uint8)
+        self.map = np.copy(self.map)
+        self.map.setflags(write=1)
+        self.envir_rankings = [192, 225, 137, 57, 200] # Map value ranking system for midges (water=200, woods=57, savannah=137, pasture=225, pine=192)
+        # Reformat map array to have rankings 0-4
+        for i in range(len(self.envir_rankings)):
+            # Add the map preference to a new map
+            self.map[self.map == self.envir_rankings[i]] = i
+        print(self.map.shape)
+        # Initialize all other variables
         self.step = 0  # Initialize the step counter
         self.size = size  # Define the population size of the swarm object
         self.pos_history = []  # Begin a list that tracks the history of midge positions
@@ -48,7 +60,7 @@ class MidgeSwarm:
         self.positions = np.random.uniform(low=0.0, high=envir.length, size=(self.size, 2))
 
         self.randomvector = generate_random_vector(self.envir.length, self.size,
-                                                   self.positions)  # Array of random vector where the midges travel, updates every few steps
+                                                   self.positions, 5, self.map)  # Array of random vector where the midges travel, updates every few steps
 
         # Create a random array of which midges are infected if desired, otherwise it is defined
         if infected == 'random':
@@ -95,12 +107,13 @@ class MidgeSwarm:
                 self.positions = self.positions * survivingmidges + newpositions * (~survivingmidges)
 
         # A new random vector is generated every 30 minutes for the midges to travel in
-        if self.step % 30 == 0:
-            self.randomvector = generate_random_vector(self.envir.length, self.size, self.positions)
+        self.randomvector = generate_random_vector(self.envir.length, self.size, self.positions, 5, self.map)
+
+        # print('Step:', self.step)
 
         # Move hosts in a random walk if so desired at walk velocity
         if self.movehosts:
-            self.hostswarm.positions = self.hostswarm.positions + generate_random_vector(self.envir.length, self.hostswarm.size, self.hostswarm.positions) * self.hostwalkvelocity * dt
+            self.hostswarm.positions = self.hostswarm.positions + generate_random_vector(self.envir.length, self.hostswarm.size, self.hostswarm.positions, 5, self.map) * self.hostwalkvelocity * dt
 
         # Calculate which midges have fed lately by tracking when the last bloodmeal was
         self.fed = ((self.step - self.timeoffeeding) < self.biterate)
@@ -150,6 +163,7 @@ class MidgeSwarm:
 
         # Increment the step counter
         self.step += 1
+        print(self.step)
 
     # Returns the matrix of vectors from every midge to every host (midges x host x 2) size
     def calculate_target_matrix(self):
@@ -257,25 +271,29 @@ class MidgeSwarm:
             writer = csv.writer(csvfile, delimiter=',')
             header = ['Step', 'Midge', 'Midge X', 'Midge Y']
             writer.writerow(header)
-            for i in range(self.step):
-                for j in range(self.size):
-                    writer.writerow([i, j, self.pos_history[i][j][0], self.pos_history[i][j][1]])
+            finalstep = self.step-1
+            for j in range(self.size):
+                writer.writerow([finalstep, j, self.pos_history[finalstep][j][0], self.pos_history[finalstep][j][1]])
 
         # SAVE DEER POSITIONS
         with open(fnamehost, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
             header = ['Step', 'Host', 'Host X', 'Host Y']
             writer.writerow(header)
-            for i in range(self.step):
-                for j in range(self.hostswarm.size):
-                    writer.writerow([i, j, self.hostswarm.pos_history[i][j][0], self.hostswarm.pos_history[i][j][1]])
+            # for i in range(self.step):
+            #     for j in range(self.hostswarm.size):
+            #         writer.writerow([i, j, self.hostswarm.pos_history[i][j][0], self.hostswarm.pos_history[i][j][1]])
+            # Just save the last step positions
+            finalstep = self.step-1
+            for j in range(self.hostswarm.size):
+                writer.writerow([finalstep, j, self.hostswarm.pos_history[finalstep][j][0], self.hostswarm.pos_history[finalstep][j][1]])
 
         return
 
 
 class HostSwarm:
 
-    def __init__(self, envir, size=50, positions='random', infected='random', steplength=1.0, incubationtime=2):
+    def __init__(self, envir, size=50, positions='random', infected='random', steplength=1.0):
 
         # Define the population size of the swarm object
         self.size = size
@@ -289,7 +307,7 @@ class HostSwarm:
         # Attach the environment object to the swarm class
         self.envir = envir
 
-        self.incubationtime = incubationtime
+        self.incubationtime = 2
 
         self.incubationstarttime = np.full(self.size,
                                            0)  # Create an array that tracks when midges begin incubation for BTV
@@ -318,10 +336,53 @@ class HostSwarm:
         return self.positions
 
 
-# Random movement function
-def generate_random_vector(length, size, positions):
+# Returns vector for preferential random movement on the map (includes current tile)
+def generate_random_vector(length, size, positions, scale, map_arr):
     # Creates a vector from the midge to a random position within the domain, then the midge will follow that vector
-    newvectors = np.random.uniform(low=0.0, high=length, size=(size, 2)) - positions
+    altvectors = np.random.uniform(low=0.0, high=length, size=(size, 2))
+
+    newvectors = np.zeros(shape=(size, 2))
+    for idx in range(len(positions)):
+        x, y = positions[idx]
+        # print(x, y)
+        # Find corresponding index on map array by truncating to int and converting by scale
+        x_map = int(x / scale)
+        y_map = int(y / scale)
+        # Store the neighboring tiles and their map values
+        neighbors = []
+        # Get neighboring tiles and corresponding map values
+        for i in range(-1,2):
+            for j in range(-1,2):
+                if x_map + i >= 0 and y_map + j >= 0:
+                    try:
+                        neighbors.append((x_map + i, y_map + j, map_arr[x_map + i, y_map + j]))
+                        # print('Appended Neighbor', map_arr[x_map + i, y_map + j])
+                    except:
+                        # print('Error appending neighbor')
+                        # neighbors.append((x_map + i, y_map + j, -1))
+                        pass
+        # Try to randomly select the preferred location
+        try:
+            # print('Length of neighbors:', len(neighbors))
+            # Find the maximum value of the neighbors tile
+            max_val = np.max(neighbors, axis = 0)[2]
+            # print('Max Value:', max_val)
+            # Create new list of choices, just x and y coordinates
+            choices = [(x_choice,y_choice) for x_choice,y_choice,v in neighbors if v == max_val]
+            # print(len(choices))
+            # Randomly select a tile to move to from the choices, then convert it back to the x,y coordinates on the grid
+            vec = choices[np.random.choice(range(len(choices)))]
+            scaled_vec = [(val+0.5)*scale for val in vec]
+            newvectors[idx] = scaled_vec
+            # print('Scaled Vector')
+        # If there are no possible choices (should not occur), just wander in random walk
+        except:
+            newvectors[idx] = altvectors[idx]
+            # print('Alternative Vector')
+    print(newvectors[0])
+    # Now that the new positions have been appended, we must convert them to vectors by subtracting the original positions
+    newvectors -= positions
+    # Scale the vector to be of length one
     newvectors /= np.expand_dims(np.linalg.norm(newvectors, axis=1), axis=1)
 
     return newvectors
