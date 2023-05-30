@@ -16,4 +16,4 @@ The Python libraries required to run the model include NumPy, SciPy, Matplotlib,
 The lead developer of this code is [Shane Gladson](https://github.com/shanegladson).
 
 ## Licensing
-Copyright 2022 [Tracy Stepien's Research Lab Group](https://github.com/stepien-lab/). This is free software made available under the MIT License. For details see the [LICENSE](LICENSE) file.
+Copyright 2022-2023 [Tracy Stepien's Research Lab Group](https://github.com/stepien-lab/). This is free software made available under the MIT License. For details see the [LICENSE](LICENSE) file.
