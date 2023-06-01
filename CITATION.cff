@@ -1,0 +1,25 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: MidgePy
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Shane
+    email: shanegladson@ufl.edu
+    affiliation: University of Florida
+    family-names: Gladson
+  - given-names: Tracy
+    family-names: Stepien
+    email: tstepien@ufl.edu
+    affiliation: University of Florida
+    orcid: 'https://orcid.org/0000-0003-1683-0896'
+identifiers:
+  - type: url
+    value: 'https://github.com/stepien-lab/MidgePy'
+license: MIT
+version: v1.0.0
+date-released: '2023-06-01'
